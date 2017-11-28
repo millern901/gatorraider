@@ -848,7 +848,14 @@
       <option name="project" value="LOCAL" />
       <updated>1511889977702</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="superTrapper added&#10;pincher added&#10;trapper added">
+      <created>1511890231030</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1511890231030</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
