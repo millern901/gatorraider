@@ -2,64 +2,62 @@ package ufl.cs1.controllers;
 
 import game.controllers.DefenderController;
 import game.models.Defender;
-import game.models.Attacker;
-import game.models.Node;
 import game.models.Game;
+import game.models.Node;
+import game.models.Attacker;
 
 import java.util.List;
 
 public final class StudentController implements DefenderController
 {
-	public void init(Game game)
-    {
-    }
+	public void init(Game game) { }
 
 	public void shutdown(Game game) { }
 
 	public int[] update(Game game,long timeDue)
 	{
-		int[] actions = new int[Game.NUM_DEFENDER];
-		List<Defender> enemies = game.getDefenders();
-		Attacker paku = game.getAttacker();
-		//Chooses a random LEGAL action if required. Could be much simpler by simply returning
-        //any random number of all of the ghosts
-        for(int i = 0; i < actions.length; i++)
-		{
+        int[] actions = new int[Game.NUM_DEFENDER];
+        List<Defender> enemies = game.getDefenders();
+
+        for(int i = 0; i < actions.length; i++) {
             Defender defender = enemies.get(i);
-            actions[i] = dumbChase(defender,paku);
+
+            if (i == 0 || i == 1) {
+                int direction = game.getAttacker().getDirection();
+                Node target = game.getAttacker().getLocation().getNeighbor(direction);
+                if (target == null)
+                    actions[i] = defender.getNextDir(game.getAttacker().getLocation(), !defender.isVulnerable());
+                else
+                    actions[i] = defender.getNextDir(target, !defender.isVulnerable());
+            }
+
+            if (i == 2 || i == 3) {
+                actions[i] = defender.getNextDir(game.getAttacker().getLocation(), !defender.isVulnerable());
+            }
+
         }
-//        print_moves(actions);
         return actions;
 	}
 
-    private void print_moves(int [] actions)
+
+    private int dumbChaser(Attacker attacker, Defender defender)
     {
-        for(int i = 0; i < actions.length; i++){
-            System.out.print(i + " ");
-            switch (actions[i])
-            {
-                case 2:
-                    System.out.print("UP ");
-                    break;
-                case 3:
-                    System.out.print("RIGHT ");
-                    break;
-                case 0:
-                    System.out.print("DOWN ");
-                    break;
-                case 1:
-                    System.out.print("LEFT ");
-                    break;
-                default:
-                    System.out.print("NIL ");
-                    break;
-            }
-        }
-        System.out.println();
+            return defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
+
+	}
+
+    private int trapper(Attacker attacker, Defender defender)
+    {
+        Node target = attacker.getLocation().getNeighbor(attacker.getDirection());
+        if (target == null)
+            return defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
+        else
+            return defender.getNextDir(target, !defender.isVulnerable());
     }
 
-	private int dumbChase(Defender ghost, Attacker paku)
-    {
-        return ghost.getNextDir(paku.getLocation(), !ghost.isVulnerable());
-    }
-}
+
+
+
+
+
+	}
