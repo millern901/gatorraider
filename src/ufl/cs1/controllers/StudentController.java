@@ -1,10 +1,7 @@
 package ufl.cs1.controllers;
 
 import game.controllers.DefenderController;
-import game.models.Defender;
-import game.models.Game;
-import game.models.Node;
-import game.models.Attacker;
+import game.models.*;
 
 import java.util.List;
 
@@ -22,19 +19,18 @@ public final class StudentController implements DefenderController
         for(int i = 0; i < actions.length; i++) {
             Defender defender = enemies.get(i);
 
-            if (i == 0 || i == 1) {
-                int direction = game.getAttacker().getDirection();
-                Node target = game.getAttacker().getLocation().getNeighbor(direction);
-                if (target == null)
-                    actions[i] = defender.getNextDir(game.getAttacker().getLocation(), !defender.isVulnerable());
-                else
-                    actions[i] = defender.getNextDir(target, !defender.isVulnerable());
+            if (i == 0) {
+                actions[i] = superTrapper(game.getAttacker(), game.getDefender(i), game);
             }
-
-            if (i == 2 || i == 3) {
-                actions[i] = defender.getNextDir(game.getAttacker().getLocation(), !defender.isVulnerable());
+            if (i == 1) {
+                actions[i] = trapper(game.getAttacker(), game.getDefender(i));
             }
-
+            if (i == 2) {
+                actions[i] = pincher(game.getAttacker(), game.getDefender(i));
+            }
+            if (i == 3) {
+                actions[i] = dumbChaser(game.getAttacker(), game.getDefender(i));
+            }
         }
         return actions;
 	}
@@ -55,9 +51,31 @@ public final class StudentController implements DefenderController
             return defender.getNextDir(target, !defender.isVulnerable());
     }
 
+    private int pincher(Attacker attacker, Defender defender)
+    {
+        Node target = attacker.getLocation().getNeighbor(attacker.getReverse());
+        if (target == null)
+            return defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
+        else
+            return defender.getNextDir(target, !defender.isVulnerable());
+    }
 
+    private int superTrapper(Attacker attacker, Defender defender, Game game) {
+        Node target = attacker.getLocation().getNeighbor(attacker.getDirection());
 
+        if (target == null)
+            defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
 
+        else {
+            Node superTarget = target.getNeighbor(attacker.getDirection());
+
+            if (!(superTarget == null) && defender.getLocation().getPathDistance(superTarget) > 3) {
+                return defender.getNextDir(superTarget, !defender.isVulnerable());
+            }
+            else return defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
+        }
+        return -1;
+    }
 
 
 	}
