@@ -7,93 +7,163 @@ import java.util.List;
 
     public final class StudentController implements DefenderController
     {
-        public void init(Game game) {
-        }
+        public void init(Game game) {}
 
-        public void shutdown(Game game) {
-        }
+        public void shutdown(Game game) {}
 
         public int[] update(Game game, long timeDue) {
             int[] actions = new int[Game.NUM_DEFENDER];
 
-                actions[0] = trapperUpdate(game.getAttacker(), game.getDefender(0), game, game.getCurMaze());
-                actions[1] = baitUpdate(game.getAttacker(), game.getDefender(1), game.getCurMaze(),game);
-                actions[2] = pincherUpdate(game.getAttacker(), game.getDefender(2), game.getCurMaze(),game);
-                actions[3] = dumbChaserUpdate(game.getAttacker(), game.getDefender(3), game.getCurMaze(),game);
+                actions[0] = cutOffUpdate(game.getAttacker(), game.getDefender(0), game);
+                actions[1] = baitUpdate(game.getAttacker(), game.getDefender(1));
+                actions[2] = pincherUpdate(game.getAttacker(), game.getDefender(2), game);
+                actions[3] = dumbChaserUpdate(game.getAttacker(), game.getDefender(3), game);
 
             return actions;
         }
 
         // ** Ghost AI methods **
 
-        private int baitUpdate(Attacker attacker, Defender defender,Maze m,Game game) {
-            if(PakuOnPowerPill(attacker,m)){
-                return run(defender,m,attacker,game,3);
+        /**
+         * Simple cut off method gets the path to the position in front of paku.
+         * @version 1.0
+         * @author Nicholas Miller <https://github.com/millern901/gatorraider>
+         *
+         * @param paku attacker object
+         * @param ghost defender object
+         * @param game game state
+         * @return direction of movement
+         */
+        private int cutOffUpdate(Attacker paku, Defender ghost, Game game) {
+            if(PakuOnPowerPill(paku, game.getCurMaze())) {
+                return run(ghost, paku, game, 2);
             }
-            Node target = attacker.getLocation().getNeighbor(attacker.getDirection());
-            if (target == null)
-                return defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
-            else
-                return defender.getNextDir(target, !defender.isVulnerable());
+            Node target = targetInFront(paku);
+            return PakuBlocksPathFinder(paku, ghost, target);
         }
 
-        private int dumbChaserUpdate(Attacker paku, Defender ghost,Maze m,Game game) {
-            if(PakuOnPowerPill(paku,m)){
-                return run(ghost,m,paku,game,1);
+        /**
+         *Simple bait method that attacks paku if he is a certain distance away from a powerPill.
+         * @version 1.0
+         * @author -----NameHere----- <https://github.com/-----GitHubNameHere-----/gatorraider>
+         *
+         * @param paku attacker object
+         * @param ghost defender object
+         * @return direction of movement
+         */
+        private int baitUpdate(Attacker paku, Defender ghost) {
+            Node target = paku.getLocation().getNeighbor(paku.getDirection());
+            if (target == null)
+                return ghost.getNextDir(paku.getLocation(), !ghost.isVulnerable());
+            else
+                return ghost.getNextDir(target, !ghost.isVulnerable());
+        }
+
+        /**
+         * Simple pinch method gets the path to the position behind paku.
+         * @version 1.0
+         * @author -----Jake----- <https://github.com/-----GitHubNameHere-----/gatorraider>
+         *
+         * @param paku attacker object
+         * @param ghost defender object
+         * @param game game state
+         * @return direction of movement
+         */
+        private int pincherUpdate(Attacker paku, Defender ghost,Game game) {
+            if(PakuOnPowerPill(paku, game.getCurMaze())){
+                return run(ghost, paku, game,2);
+            }
+            Node target = targetBehind(paku);
+            return PakuBlocksPathFinder(paku, ghost, target);
+        }
+
+        /**
+         * Simple chaser method gets the path to the position of paku.
+         * @version 1.0
+         * @author Kevin Nguyen <https://github.com/ngynkvn/gatorraider>
+         *
+         * @param paku attacker object
+         * @param ghost defender object
+         * @param game game state
+         * @return direction of movement
+         */
+        private int dumbChaserUpdate(Attacker paku, Defender ghost, Game game) {
+            if(PakuOnPowerPill(paku, game.getCurMaze())){
+                return run(ghost, paku, game,1);
             }
             return ghost.getNextDir(paku.getLocation(), !ghost.isVulnerable());
         }
 
-        private int pincherUpdate(Attacker attacker, Defender defender,Maze m,Game game) {
-            if(PakuOnPowerPill(attacker,m)){
-                return run(defender,m,attacker,game,2);
+        // **Methods used within AI methods**
+
+        private int PakuBlocksPathFinder(Attacker paku, Defender ghost, Node target) {
+            List<Integer> neighbors = ghost.getPossibleDirs();
+            int direction = ghost.getDirection();
+
+            if (isPakuOnPath(paku, ghost, target)) {
+                for (int x = 0; x < neighbors.size(); x++)
+                    if (neighbors.get(x) ==  direction) neighbors.remove(x);
+                return compareDistances(neighbors, ghost, target);
             }
-            Node target = attacker.getLocation().getNeighbor(attacker.getReverse());
-            if (target == null)
-                return defender.getNextDir(attacker.getLocation(), !defender.isVulnerable());
-            else
-                return defender.getNextDir(target, !defender.isVulnerable());
+
+            return ghost.getNextDir(target, !ghost.isVulnerable());
         }
 
-        private int trapperUpdate(Attacker attacker, Defender defender, Game game , Maze m) {
-            Node target = targetInFrontOf(attacker);
-            if (!isPakuOnPath(attacker, defender)) {
-
-            }
-            else {
-                if (!defender.getLocation().isJunction()) {
-
-
-                } else {
-
-
+        private int compareDistances(List<Integer> neighbors, Defender ghost, Node target) {
+            int direction = 0;
+            int tempDistance = 0;
+            for (int y = 0; y < neighbors.size(); y++) {
+                if (neighbors.get(y) == null)
+                    continue;
+                else if (tempDistance >  distanceToNode(ghost.getLocation().getNeighbor(neighbors.get(y)), target)) {
+                    direction = y;
+                    tempDistance = distanceToNode(ghost.getLocation().getNeighbor(neighbors.get(y)), target);
                 }
-
             }
-            return defender.getNextDir(target, !defender.isVulnerable());
+            return direction;
         }
 
+        private int distanceToNode(Node position, Node target) {
+            return (int)Math.sqrt(Math.pow(target.getX() - position.getX(), 2) + Math.pow(target.getY() - position.getY(), 2));
+        }
 
-        private boolean isPakuOnPath(Attacker attacker, Defender defender) {
-            Node target = targetInFrontOf(attacker);
-            List<Node> listToPaku = defender.getPathTo(target);
+        private boolean isPakuOnPath(Attacker paku, Defender ghost, Node target) {
+            List<Node> listToPaku = ghost.getPathTo(target);
 
             for (Node node: listToPaku) {
-                if (attacker.getLocation().equals(node) ) return true;
+                if (paku.getLocation().equals(node) ) return true;
             }
             return false;
         }
 
-        private Node targetInFrontOf(Attacker attacker) {
-            Node target = attacker.getLocation().getNeighbor(attacker.getDirection());
+        private Node targetInFront(Attacker paku) {
+            Node target = paku.getLocation().getNeighbor(paku.getDirection());
             if (target == null)
-                return attacker.getLocation();
-            return target;
+                return paku.getLocation();
+            else {
+                Node superTarget = target.getNeighbor(paku.getDirection());
+                if (superTarget == null) {
+                    return target;
+                }
+                return superTarget;
             }
+        }
 
-        private boolean PakuOnPowerPill(Attacker Paku,Maze m)
-        {
-            for (Node n : m.getPowerPillNodes()) {
+        private Node targetBehind(Attacker paku) {
+            Node target = paku.getLocation().getNeighbor(paku.getReverse());
+            if (target == null)
+                return paku.getLocation();
+            else {
+                Node superTarget = target.getNeighbor(paku.getReverse());
+                if (superTarget == null) {
+                    return target;
+                }
+                return superTarget;
+            }
+        }
+
+        private boolean PakuOnPowerPill(Attacker Paku, Maze maze) {
+            for (Node n : maze.getPowerPillNodes()) {
                 if(Paku.getLocation().getPathDistance(n) < 5) {
                     return true;
                 }
@@ -101,13 +171,10 @@ import java.util.List;
             return false;
         }
 
-        private int run(Defender ghost,Maze m,Attacker Paku,Game game,int defenderNumber){
-
-            int distance = Integer.MIN_VALUE;
-            Node fatherest = null;
+        private int run(Defender ghost, Attacker Paku, Game game, int defenderNumber){
             Node[] otherpill = new Node[3];
             int i = 0;
-            for (Node n : m.getPowerPillNodes()){
+            for (Node n : game.getCurMaze().getPowerPillNodes()){
                 if(n.getPathDistance(Paku.getLocation()) > 5) {
                     otherpill[i] = n;
                     i++;
@@ -123,6 +190,7 @@ import java.util.List;
                 return ghost.getNextDir(otherpill[0], true);
             }
         }
+
         // ** Helper methods **
 
         /**
