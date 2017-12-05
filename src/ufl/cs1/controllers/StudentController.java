@@ -45,7 +45,7 @@ import java.util.List;
         /**
          *Simple bait method that attacks paku if he is a certain distance away from a powerPill.
          * @version 1.0
-         * @author -----NameHere----- <https://github.com/-----GitHubNameHere-----/gatorraider>
+         * @author -----Jack----- <https://github.com/-----GitHubNameHere-----/gatorraider>
          *
          * @param paku attacker object
          * @param ghost defender object
@@ -62,7 +62,7 @@ import java.util.List;
         /**
          * Simple pinch method gets the path to the position behind paku.
          * @version 1.0
-         * @author -----Jake----- <https://github.com/-----GitHubNameHere-----/gatorraider>
+         * @author -----Carl----- <https://github.com/-----GitHubNameHere-----/gatorraider>
          *
          * @param paku attacker object
          * @param ghost defender object
@@ -96,6 +96,14 @@ import java.util.List;
 
         // **Methods used within AI methods**
 
+        /**
+         * Simple method to find the path to paku if paku lies on the shortest path to him
+         *
+         * @param paku
+         * @param ghost
+         * @param target node
+         * @return is paku on path to node
+         */
         private int PakuBlocksPathFinder(Attacker paku, Defender ghost, Node target) {
             List<Integer> neighbors = ghost.getPossibleDirs();
             int direction = ghost.getDirection();
@@ -109,13 +117,21 @@ import java.util.List;
             return ghost.getNextDir(target, !ghost.isVulnerable());
         }
 
+        /**
+         * simple method to get a new direction of movement if paku lies on the path of movement
+         *
+         * @param neighbors
+         * @param ghost
+         * @param target
+         * @return direction of movement
+         */
         private int compareDistances(List<Integer> neighbors, Defender ghost, Node target) {
             int direction = 0;
             int tempDistance = 0;
             for (int y = 0; y < neighbors.size(); y++) {
                 if (neighbors.get(y) == null)
                     continue;
-                else if (tempDistance >  distanceToNode(ghost.getLocation().getNeighbor(neighbors.get(y)), target)) {
+                else if (tempDistance > distanceToNode(ghost.getLocation().getNeighbor(neighbors.get(y)), target)) {
                     direction = y;
                     tempDistance = distanceToNode(ghost.getLocation().getNeighbor(neighbors.get(y)), target);
                 }
@@ -123,10 +139,25 @@ import java.util.List;
             return direction;
         }
 
+        /**
+         * simple method to calculate the distance to a Node from a Node in a line
+         *
+         * @param position
+         * @param target
+         * @return int distance
+         */
         private int distanceToNode(Node position, Node target) {
             return (int)Math.sqrt(Math.pow(target.getX() - position.getX(), 2) + Math.pow(target.getY() - position.getY(), 2));
         }
 
+        /**
+         * Simple method to determine if paku is on the path
+         *
+         * @param paku
+         * @param ghost
+         * @param target
+         * @return is paku on path
+         */
         private boolean isPakuOnPath(Attacker paku, Defender ghost, Node target) {
             List<Node> listToPaku = ghost.getPathTo(target);
 
@@ -136,6 +167,12 @@ import java.util.List;
             return false;
         }
 
+        /**
+         * Simple method to determine the Node in front of paku
+         *
+         * @param paku
+         * @return Node in front of paku
+         */
         private Node targetInFront(Attacker paku) {
             Node target = paku.getLocation().getNeighbor(paku.getDirection());
             if (target == null)
@@ -149,6 +186,12 @@ import java.util.List;
             }
         }
 
+        /**
+         * Simple method to determine the Node behind paku
+         *
+         * @param paku
+         * @return Node behind paku
+         */
         private Node targetBehind(Attacker paku) {
             Node target = paku.getLocation().getNeighbor(paku.getReverse());
             if (target == null)
@@ -162,6 +205,13 @@ import java.util.List;
             }
         }
 
+        /**
+         * Simple method to check if paku is near a powerpill
+         *
+         * @param Paku
+         * @param maze
+         * @return if paku is near a powerpill
+         */
         private boolean PakuOnPowerPill(Attacker Paku, Maze maze) {
             for (Node n : maze.getPowerPillNodes()) {
                 if(Paku.getLocation().getPathDistance(n) < 5) {
@@ -171,6 +221,15 @@ import java.util.List;
             return false;
         }
 
+        /**
+         * Simple method that returns the direction of the corner for the ghost to run in
+         *
+         * @param ghost
+         * @param Paku
+         * @param game state
+         * @param defenderNumber
+         * @return direction of movement
+         */
         private int run(Defender ghost, Attacker Paku, Game game, int defenderNumber){
             Node[] otherpill = new Node[3];
             int i = 0;
